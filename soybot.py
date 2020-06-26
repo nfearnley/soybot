@@ -7,17 +7,27 @@
 # timed messages
 # quote db?
 
-import socket, string, time, re, threading
+import socket, string, time, re, threading, asyncio
 
 ################# STICK CREDS HERE #################
+print("Welcome to Soybot.\n")
 
 # grab auth key
 f = open("../soybot_oauth","r")
 oauth = f.read()
-botname = "allezsoybot"
 botnamepreferred = "Soybot"
-streamername = "allezsoyez"
+botname = ""
+streamername = ""
+confirm = ""
+timedmsgconfirm = ""
 
+# connect
+while confirm != "y":
+	streamername = input("Whose chat are we connecting to? ").lower()
+	botname = input("Bot account name: ").lower()
+	timedmsgconfirm = input("Would you like to use timed messages this session? ").lower()
+	confirm = input("Connect With these settings now? [Y/N] ").lower()
+	
 timerlist = ["I don't know why you'd want to do this, but here's alleZSoyez's Twitter if you want to follow. https://twitter.com/alleZSoyez",
 			"Stream archives and various cringe: https://www.youtube.com/channel/UCIYXXmcyfdyNgxF-oBMP3dw",
 			"You can type !quote to show a random quote. Just beware of mature content.",
@@ -152,4 +162,5 @@ while True:
 				threading.Thread(name='countdown', target=countdown, daemon=True).start()
 				threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
 
-				threading.Thread(name='timedmsg', target=timedmsg(timerlist), daemon=True).start()
+				if timedmsgconfirm == "y":
+					threading.Thread(name='timedmsg', target=timedmsg(timerlist), daemon=True).start()
