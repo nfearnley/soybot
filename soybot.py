@@ -16,10 +16,7 @@ print("Welcome to Soybot.\n")
 f = open("../soybot_oauth","r")
 oauth = f.read()
 botnamepreferred = "Soybot"
-botname = ""
-streamername = ""
-confirm = ""
-timedmsgconfirm = ""
+botname = streamername = confirm = timedmsgconfirm = ""
 
 # connect
 while confirm != "y":
@@ -27,7 +24,8 @@ while confirm != "y":
 	botname = input("Bot account name: ").lower()
 	timedmsgconfirm = input("Would you like to use timed messages this session? [Y/N] ").lower()
 	confirm = input("Connect With these settings now? [Y/N] ").lower()
-	
+
+# eventually these will go to an external file but for now let's get it even working
 timerlist = ["I don't know why you'd want to do this, but here's alleZSoyez's Twitter if you want to follow. https://twitter.com/alleZSoyez",
 			"Stream archives and various cringe: https://www.youtube.com/channel/UCIYXXmcyfdyNgxF-oBMP3dw",
 			"You can type !quote to show a random quote. Just beware of mature content.",
@@ -39,9 +37,7 @@ print (botnamepreferred + " is running. To quit, just close this window.\n")
 
 #### empty stuff bc we'll need em
 readbuffer = "".encode()
-incomingusr = ""
-incomingcmd = ""
-incomingmsg = ""
+incomingusr = incomingcmd = incomingmsg = ""
 
 #### connect to chat
 s = socket.socket()
