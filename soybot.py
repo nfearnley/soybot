@@ -25,7 +25,7 @@ timedmsgconfirm = ""
 while confirm != "y":
 	streamername = input("Whose chat are we connecting to? ").lower()
 	botname = input("Bot account name: ").lower()
-	timedmsgconfirm = input("Would you like to use timed messages this session? ").lower()
+	timedmsgconfirm = input("Would you like to use timed messages this session? [Y/N] ").lower()
 	confirm = input("Connect With these settings now? [Y/N] ").lower()
 	
 timerlist = ["I don't know why you'd want to do this, but here's alleZSoyez's Twitter if you want to follow. https://twitter.com/alleZSoyez",
