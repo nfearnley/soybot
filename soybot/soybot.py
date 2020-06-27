@@ -7,16 +7,15 @@
 # timed messages
 # quote db?
 
-import socket
 import time
 import re
 import threading
-# import asyncio
+
+from soybot.lib.irc import IRC
 
 # Globals. Change this.
-botnamepreferred = "Soybot"
+displayname = "Soybot"
 botname = streamername = confirm = timedmsgconfirm = ""
-s = socket.socket()
 
 
 # eventually these will go to an external file but for now let's get it even working
@@ -46,17 +45,8 @@ def getmsg(line):
     return incomingusr, incomingmsg, incomingcmd
 
 
-#### make messages easy & print em to console
-def sendmsg(message):
-    global s
-    global streamername
-    global botnamepreferred
-    s.send(("PRIVMSG #" + streamername + " :" + message + "\r\n").encode())
-    print("***" + botnamepreferred + ": " + message)
-
-
 ################# TIMED COMMANDS #################
-def timedmsg(timerlist):
+def timedmsg(irc, timerlist):
     counter = 0
 
     while True:
@@ -66,7 +56,7 @@ def timedmsg(timerlist):
         time.sleep(5)
 
         if counter < itemcount:
-            sendmsg(timerlist[counter])
+            irc.sendmsg(timerlist[counter])
             counter = counter + 1
         else:
             counter = 0
@@ -80,7 +70,7 @@ def main():
     # grab auth key
     f = open("../soybot_oauth", "r")
     oauth = f.read()
-    global botnamepreferred, botname, streamername, confirm, timedmsgconfirm, s
+    global displayname, botname, streamername, confirm, timedmsgconfirm, s
 
     # connect
     while confirm != "y":
@@ -92,29 +82,27 @@ def main():
             botname = "allezsoybot"
         timedmsgconfirm = input("Would you like to use timed messages this session? [Y/N] ").lower()
         if timedmsgconfirm == "":
-            timedmsgconfirm = "y"
+            timedmsgconfirm = "n"
         confirm = input("Connect With these settings now? [Y/N] ").lower()
 
     #### login & start
-    print(botnamepreferred + " is running. To quit, just close this window.\n")
+    print(displayname + " is running. To quit, just close this window.\n")
 
     #### empty stuff bc we'll need em
     readbuffer = "".encode()
     incomingusr = incomingcmd = incomingmsg = ""
 
     #### connect to chat
-    s.connect(("irc.twitch.tv", 6667))
-    s.send(("PASS " + oauth + " \r\n").encode())
-    s.send(("NICK " + botname + " \r\n").encode())
-    s.send(("JOIN #" + streamername + " \r\n").encode())
+    irc = IRC(oauth = oauth, streamername = streamername, botname = botname, displayname = displayname)
+    irc.connect()
 
     #### online
-    sendmsg(botnamepreferred + " is online.")
+    irc.sendmsg(displayname + " is online.")
     print("Listening.")
 
     while True:
         # i think this receives the message?? it's a mess so we gotta split it
-        readbuffer = readbuffer + s.recv(1024)
+        readbuffer = readbuffer + irc.socket.recv(1024)
         temp = str(readbuffer, 'utf-8').split("r\n")
 
         # split msg even more
@@ -129,7 +117,7 @@ def main():
 
             # uhh i guess leaving the ping thing from stolen code could be useful??
             if (incomingcmd == "PING"):
-                s.send("PONG %s\r\n")
+                irc.pong()
             else:
                 if (incomingcmd == "PRIVMSG"):
 
@@ -139,14 +127,14 @@ def main():
                     def noping():
                         if incomingusr.lower() != botname.lower():
                             if (streamername or "@" + streamername) in incomingmsg.lower():
-                                sendmsg("Don't ping the streamer, @" + incomingusr + "!")
+                                irc.sendmsg("Don't ping the streamer, @" + incomingusr + "!")
 
                     ######## COUNTDOWN (!countdown <int>)
                     def countdown():
                         countdownmatch = re.compile(r"^!countdown( \d+)?", re.IGNORECASE)
 
                         if (countdownmatch.match(incomingmsg)):
-                            sendmsg("Countdown starting!")
+                            irc.sendmsg("Countdown starting!")
                             time.sleep(2)
                             c = str(re.findall(r"\d+", incomingmsg))
                             c = c.replace("[", "")
@@ -159,17 +147,17 @@ def main():
                                 counter = 3
 
                             while counter > 0:
-                                sendmsg(str(counter) + "!")
+                                irc.sendmsg(str(counter) + "!")
                                 time.sleep(1.5)
                                 counter = counter - 1
-                            sendmsg("GO!")
+                            irc.sendmsg("GO!")
 
                     ######## NO BACKSEAT GAMING! (!backseat OR !bsg)
                     def backseatgaming():
                         backseatmatch = re.compile("^!(backseat|bsg)", re.IGNORECASE)
 
                         if (backseatmatch.match(incomingmsg)):
-                            sendmsg("NO BACKSEAT GAMING!")
+                            irc.sendmsg("NO BACKSEAT GAMING!")
 
                     ################# END MANUAL BOT COMMANDS #################
 
@@ -179,4 +167,4 @@ def main():
                     threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
 
                     if timedmsgconfirm == "y":
-                        threading.Thread(name='timedmsg', target=timedmsg(timerlist), daemon=True).start()
+                        threading.Thread(name='timedmsg', target=timedmsg(irc, timerlist), daemon=True).start()
