@@ -1,0 +1,2 @@
+py -m soybot
+pause
