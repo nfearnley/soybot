@@ -85,8 +85,14 @@ def main():
     # connect
     while confirm != "y":
         streamername = input("Whose chat are we connecting to? ").lower()
+        if streamername == "":
+            streamername = "allezsoyez"
         botname = input("Bot account name: ").lower()
+        if botname == "":
+            botname = "allezsoybot"
         timedmsgconfirm = input("Would you like to use timed messages this session? [Y/N] ").lower()
+        if timedmsgconfirm == "":
+            timedmsgconfirm = "y"
         confirm = input("Connect With these settings now? [Y/N] ").lower()
 
     #### login & start
