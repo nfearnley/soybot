@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 # i have no idea what i'm doing here
-# ripped a touch of this code from https://www.youtube.com/watch?v=5Kv3_V5wFgg
+#
+# ripped a touch of this code from:
+# https://www.youtube.com/watch?v=5Kv3_V5wFgg
+# https://hackernoon.com/threaded-asynchronous-magic-and-how-to-wield-it-bba9ed602c32
 
-# command ideas:
+# command ideas / things to fix:
 # delete my last message because APPARENTLY NORMAL USERS CAN'T DO THAT LIKE ON MIXER AAAAAAAAAAAAAAAAA
-# timed messages
-# quote db?
+# timed messages need to be independent of listening for messages
+# quote db because i'm tired of scorpbot
+# it doesn't like : character in messages. fix it
+# actually the incoming message handing in general is... y i k e s
 
 import time
 import re
@@ -25,6 +30,9 @@ timerlist = [
     "You can type !quote to show a random quote. Just beware of mature content.",
     "It's not expected or required, but if you'd like to support these streams... https://allezsoyez.streamjar.gg/tip"
 ]
+
+timedmsgcount = int(len(timerlist))
+timedmsgcurrent = 0
 
 
 #### sifts through the garbage to get the important bits of the messages
@@ -47,24 +55,22 @@ def getmsg(line):
 
 ################# TIMED COMMANDS #################
 def timedmsg(irc, timerlist):
-    counter = 0
+	if timedmsgconfirm == "y":
+		#15 mins... eventually, for now it's testing with 10 seconds
+		global timedmsgcurrent, timedmsgcount
+		time.sleep(10)
 
-    while True:
-        itemcount = len(timerlist)
+		irc.sendmsg(timerlist[timedmsgcurrent])
+		timedmsgcurrent = timedmsgcurrent + 1
 
-        # 15 mins
-        time.sleep(5)
-
-        if counter < itemcount:
-            irc.sendmsg(timerlist[counter])
-            counter = counter + 1
-        else:
-            counter = 0
+		if timedmsgcurrent > timedmsgcount:
+			timedmsgcurrent = 0
+	else:
+		print("Timed messages disabled this session.")
 ################# END TIMED COMMANDS #################
 
 
 def main():
-    ################ STICK CREDS HERE #################
     print("Welcome to Soybot.\n")
 
     # grab auth key
@@ -123,6 +129,12 @@ def main():
 
                     ################# ACTUAL BOT COMMANDS HERE #################
 
+                    def cute():
+                        cutematch = re.compile(r"^!cute", re.IGNORECASE)
+
+                        if ( cutematch.match(incomingmsg) ):
+                            irc.sendmsg("CS is really cute!")
+
                     ######## DON'T F%#*ING PING ME (but bot should ignore itself lmao)
                     def noping():
                         if incomingusr.lower() != botname.lower():
@@ -162,9 +174,13 @@ def main():
                     ################# END MANUAL BOT COMMANDS #################
 
                     # multithreading?? i've gone mad!
+                    threading.Thread(name='cute', target=cute, daemon=True).start()
                     threading.Thread(name='noping', target=noping, daemon=True).start()
                     threading.Thread(name='countdown', target=countdown, daemon=True).start()
                     threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
 
                     if timedmsgconfirm == "y":
                         threading.Thread(name='timedmsg', target=timedmsg(irc, timerlist), daemon=True).start()
+
+if __name__ == "__main__":
+    asyncio.run(main())
