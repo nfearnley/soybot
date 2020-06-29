@@ -11,7 +11,7 @@
 # delete my last message because APPARENTLY NORMAL USERS CAN'T DO THAT LIKE ON MIXER AAAAAAAAAAAAAAAAA
 # timed messages need to be independent of listening for messages
 # quote db because i'm tired of scorpbot
-# it doesn't like : character in messages. fix it
+# maybe the bot shouldn't run noping when someone else is running a command (like quotes)
 # actually the incoming message handing in general is... y i k e s
 # "oh boy 3 am" command needs to ask for time zone on boot (default to system time zone)
 
