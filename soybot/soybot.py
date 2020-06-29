@@ -35,24 +35,6 @@ timedmsgcount = int(len(timerlist))
 timedmsgcurrent = 0
 
 
-#### sifts through the garbage to get the important bits of the messages
-def getmsg(line):
-    # only get the message
-    msgsplitter = line.split(":")
-    incomingmsg = msgsplitter[-1]
-
-    # getting JUST the username is awful, just keep splitting...
-    usrsplitter = msgsplitter
-    incomingusr = usrsplitter[-2]
-    incomingusr = incomingusr.split(" ")
-    # may as well grab the command used in case we need it?
-    incomingcmd = incomingusr[1]
-    incomingusr = incomingusr[0].split("!")
-    incomingusr = incomingusr[0]
-
-    return incomingusr, incomingmsg, incomingcmd
-
-
 ################# TIMED COMMANDS #################
 def timedmsg(irc, timerlist):
 	if timedmsgconfirm == "y":
@@ -103,7 +85,7 @@ def main():
     irc.connect()
 
     #### online
-    irc.sendmsg(displayname + " is online.")
+    #irc.sendmsg(displayname + " is online.")
     print("Listening.")
 
     while True:
@@ -114,11 +96,32 @@ def main():
         # split msg even more
         for line in temp:
 
-            incomingusr = getmsg(line)[0]
-            incomingmsg = getmsg(line)[1]
-            incomingcmd = getmsg(line)[2]
+           
+            #### sifts through the garbage to get the important bits of the messages
 
-            # FINALLY print incoming messages to console
+            # split msg
+            splitmsg = line.split("\r\n")
+            splitmsg = splitmsg[-2]
+            splitmsg = splitmsg[1:]
+            
+            # we got the username!
+            splitmsgu = splitmsg.split("!")
+            incomingusr = splitmsgu[0]
+
+            # we got the command
+            splitmsgc = splitmsg.replace(incomingusr+"!"+incomingusr+"@"+incomingusr+".tmi.twitch.tv ","")
+            splitmsgc = splitmsgc.split(" #"+streamername)
+            incomingcmd = splitmsgc[0]
+
+            if incomingcmd == "PRIVMSG":
+                # we got the message!
+                splitmsgm = splitmsg.split(incomingusr+"!"+incomingusr+"@"+incomingusr+".tmi.twitch.tv PRIVMSG #"+streamername+" :")
+                incomingmsg = str(splitmsgm[1])
+            else:
+                incomingmsg = ""
+
+
+            # print incoming msg to console
             print(incomingusr + ": " + incomingmsg)
 
             # uhh i guess leaving the ping thing from stolen code could be useful??
