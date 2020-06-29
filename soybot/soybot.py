@@ -136,6 +136,7 @@ def main():
 
                     ################# ACTUAL BOT COMMANDS HERE #################
 
+                    ######## ehehehehehe
                     def cute():
                         cutematch = re.compile(r"^!cute", re.IGNORECASE)
 
@@ -152,7 +153,7 @@ def main():
                     def threeam(): 
                         t = datetime.now().strftime("%H:%M:%S")
                         if t == "03:00:00":
-                            print("OH BOY 3 AM!")
+                            irc.sendmsg("OH BOY 3 AM!")
 
                     ######## COUNTDOWN (!countdown <int>)
                     def countdown():
