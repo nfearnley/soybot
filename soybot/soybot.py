@@ -25,8 +25,6 @@ from soybot.lib.irc import IRC
 # Globals. Change this.
 displayname = "Soybot"
 botname = streamername = confirm = timedmsgconfirm = ""
-timedmsgcount = int(len(timerlist))
-timedmsgcurrent = 0
 
 # eventually these will go to an external file but for now let's get it even working
 timerlist = [
@@ -36,7 +34,10 @@ timerlist = [
     "It's not expected or required, but if you'd like to support these streams... https://allezsoyez.streamjar.gg/tip"
 ]
 
-################# TIMED COMMANDS #################
+timedmsgcount = int(len(timerlist))
+timedmsgcurrent = 0
+
+################# TIMED COMMAND DEFS #################
 def timedmsg(irc, timerlist):
 	if timedmsgconfirm == "y":
 		#15 mins... eventually, for now it's testing with 2 seconds
@@ -50,7 +51,14 @@ def timedmsg(irc, timerlist):
 			timedmsgcurrent = 0
 	else:
 		print("Timed messages disabled this session.")
-################# END TIMED COMMANDS #################
+
+
+######## OH BOY 3 AM! (triggers at 3 am)
+def threeam(currenttime): 
+    if currenttime == "3:00:00":
+        irc.sendmsg("OH BOY 3 AM!")
+
+################# END TIMED COMMAND DEFS #################
 
 
 def main():
@@ -93,6 +101,19 @@ def main():
         # i think this receives the message?? it's a mess so we gotta split it
         readbuffer = readbuffer + irc.socket.recv(1024)
         temp = str(readbuffer, 'utf-8').split("r\n")
+
+        ################# TIMED COMMANDS #################
+
+        # timed message sender, but we do NOT want it tied to command listener
+        # too bad it still holds up the entire script since it's not asynchronous yet AAAAAAAAAAAAAAAAAAAAAAA
+        if timedmsgconfirm == "y":
+            threading.Thread(name='timedmsg', target=timedmsg(irc, timerlist), daemon=True).start()
+
+        # come to think of it, threeam shouldn't be tied to that either.
+        currenttime = datetime.now().strftime("%H:%M:%S")
+        threading.Thread(name='threeam', target=threeam(currenttime), daemon=True).start()
+
+        ################# END TIMED COMMANDS #################
 
         # split msg even more
         for line in temp:
@@ -145,12 +166,6 @@ def main():
                             if (streamername or "@" + streamername) in incomingmsg.lower():
                                 irc.sendmsg("Don't ping the streamer, @" + incomingusr + "!")
 
-                    ######## OH BOY 3 AM! (triggers at 3 am)
-                    def threeam(): 
-                        t = datetime.now().strftime("%H:%M:%S")
-                        if t == "03:00:00":
-                            irc.sendmsg("OH BOY 3 AM!")
-
                     ######## COUNTDOWN (!countdown <int>)
                     def countdown():
                         countdownmatch = re.compile(r"^!countdown( \d+)?", re.IGNORECASE)
@@ -187,14 +202,8 @@ def main():
                     # why yes i do have these arranged in a certain order so it's aesthetically pleasing ok
                     threading.Thread(name='cute', target=cute, daemon=True).start()
                     threading.Thread(name='noping', target=noping, daemon=True).start()
-                    threading.Thread(name='threeam', target=threeam, daemon=True).start()
                     threading.Thread(name='countdown', target=countdown, daemon=True).start()
                     threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
-        
-        # timed message sender, but we do NOT want it tied to command listener
-        # too bad it still holds up the entire script since it's not asynchronous yet AAAAAAAAAAAAAAAAAAAAAAA
-        if timedmsgconfirm == "y":
-            threading.Thread(name='timedmsg', target=timedmsg(irc, timerlist), daemon=True).start()
 
 if __name__ == "__main__":
     asyncio.run(main())
