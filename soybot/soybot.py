@@ -5,17 +5,21 @@
 # https://www.youtube.com/watch?v=5Kv3_V5wFgg
 # https://hackernoon.com/threaded-asynchronous-magic-and-how-to-wield-it-bba9ed602c32
 
+# thank you to DigiDuncan for helping with this even though i'm stubborn about things a lot <3
+
 # command ideas / things to fix:
 # delete my last message because APPARENTLY NORMAL USERS CAN'T DO THAT LIKE ON MIXER AAAAAAAAAAAAAAAAA
 # timed messages need to be independent of listening for messages
 # quote db because i'm tired of scorpbot
 # it doesn't like : character in messages. fix it
 # actually the incoming message handing in general is... y i k e s
+# "oh boy 3 am" command needs to ask for time zone on boot (default to system time zone)
 
 import time
 import re
 import threading
 
+from datetime import datetime
 from soybot.lib.irc import IRC
 
 # Globals. Change this.
@@ -85,7 +89,7 @@ def main():
     irc.connect()
 
     #### online
-    #irc.sendmsg(displayname + " is online.")
+    irc.sendmsg(displayname + " is online.")
     print("Listening.")
 
     while True:
@@ -144,6 +148,12 @@ def main():
                             if (streamername or "@" + streamername) in incomingmsg.lower():
                                 irc.sendmsg("Don't ping the streamer, @" + incomingusr + "!")
 
+                    ######## OH BOY 3 AM! (triggers at 3 am)
+                    def threeam(): 
+                        t = datetime.now().strftime("%H:%M:%S")
+                        if t == "03:00:00":
+                            print("OH BOY 3 AM!")
+
                     ######## COUNTDOWN (!countdown <int>)
                     def countdown():
                         countdownmatch = re.compile(r"^!countdown( \d+)?", re.IGNORECASE)
@@ -177,8 +187,10 @@ def main():
                     ################# END MANUAL BOT COMMANDS #################
 
                     # multithreading?? i've gone mad!
+                    # why yes i do have these arranged in a certain order so it's aesthetically pleasing ok
                     threading.Thread(name='cute', target=cute, daemon=True).start()
                     threading.Thread(name='noping', target=noping, daemon=True).start()
+                    threading.Thread(name='threeam', target=threeam, daemon=True).start()
                     threading.Thread(name='countdown', target=countdown, daemon=True).start()
                     threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
 
