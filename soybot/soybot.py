@@ -9,7 +9,7 @@
 
 # command ideas / things to fix:
 # delete my last message because APPARENTLY NORMAL USERS CAN'T DO THAT LIKE ON MIXER AAAAAAAAAAAAAAAAA
-# timed messages need to be independent of listening for messages
+# timed messages need to be independent of listening for messages AND not hold up the entire program aaaaaaAAAAAAAA
 # quote db because i'm tired of scorpbot
 # maybe the bot shouldn't run noping when someone else is running a command (like quotes)
 # actually the incoming message handing in general is... y i k e s
@@ -25,31 +25,28 @@ from soybot.lib.irc import IRC
 # Globals. Change this.
 displayname = "Soybot"
 botname = streamername = confirm = timedmsgconfirm = ""
-
+timedmsgcount = int(len(timerlist))
+timedmsgcurrent = 0
 
 # eventually these will go to an external file but for now let's get it even working
 timerlist = [
-    "I don't know why you'd want to do this, but here's alleZSoyez's Twitter if you want to follow. https://twitter.com/alleZSoyez",
+    "I don't know why you'd want to do this, but here's alleZSoyez's Twitter if you'd like to follow them: https://twitter.com/alleZSoyez",
     "Stream archives and various cringe: https://www.youtube.com/channel/UCIYXXmcyfdyNgxF-oBMP3dw",
     "You can type !quote to show a random quote. Just beware of mature content.",
     "It's not expected or required, but if you'd like to support these streams... https://allezsoyez.streamjar.gg/tip"
 ]
 
-timedmsgcount = int(len(timerlist))
-timedmsgcurrent = 0
-
-
 ################# TIMED COMMANDS #################
 def timedmsg(irc, timerlist):
 	if timedmsgconfirm == "y":
-		#15 mins... eventually, for now it's testing with 10 seconds
+		#15 mins... eventually, for now it's testing with 2 seconds
 		global timedmsgcurrent, timedmsgcount
-		time.sleep(10)
+		time.sleep(2)
 
 		irc.sendmsg(timerlist[timedmsgcurrent])
 		timedmsgcurrent = timedmsgcurrent + 1
 
-		if timedmsgcurrent > timedmsgcount:
+		if timedmsgcurrent == timedmsgcount:
 			timedmsgcurrent = 0
 	else:
 		print("Timed messages disabled this session.")
@@ -99,7 +96,6 @@ def main():
 
         # split msg even more
         for line in temp:
-
            
             #### sifts through the garbage to get the important bits of the messages
 
@@ -194,9 +190,11 @@ def main():
                     threading.Thread(name='threeam', target=threeam, daemon=True).start()
                     threading.Thread(name='countdown', target=countdown, daemon=True).start()
                     threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
-
-                    if timedmsgconfirm == "y":
-                        threading.Thread(name='timedmsg', target=timedmsg(irc, timerlist), daemon=True).start()
+        
+        # timed message sender, but we do NOT want it tied to command listener
+        # too bad it still holds up the entire script since it's not asynchronous yet AAAAAAAAAAAAAAAAAAAAAAA
+        if timedmsgconfirm == "y":
+            threading.Thread(name='timedmsg', target=timedmsg(irc, timerlist), daemon=True).start()
 
 if __name__ == "__main__":
     asyncio.run(main())
