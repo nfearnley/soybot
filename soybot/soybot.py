@@ -120,14 +120,14 @@ def main():
 
         # split msg even more
         for line in temp:
-           
+
             #### sifts through the garbage to get the important bits of the messages
 
             # split msg
             splitmsg = line.split("\r\n")
             splitmsg = splitmsg[-2]
             splitmsg = splitmsg[1:]
-            
+
             # we got the username!
             splitmsgu = splitmsg.split("!")
             incomingusr = splitmsgu[0]
@@ -144,7 +144,6 @@ def main():
             else:
                 incomingmsg = ""
 
-
             # print incoming msg to console
             print(incomingusr + ": " + incomingmsg)
 
@@ -152,16 +151,17 @@ def main():
             if (incomingcmd == "PING"):
                 irc.pong()
             else:
+
                 if (incomingcmd == "PRIVMSG"):
 
                     ################# ACTUAL BOT COMMANDS HERE #################
 
                     ######## ehehehehehe
                     def cute():
-                        cutematch = re.compile(r"^!cute", re.IGNORECASE)
+                        cutematch = re.compile(r"^!cute$", re.IGNORECASE)
 
                         if ( cutematch.match(incomingmsg) ):
-                            irc.sendmsg("CS is really cute!")
+                            irc.sendmsg("CS is really cute! <3")
 
                     ######## DON'T F%#*ING PING ME (but bot should ignore itself lmao)
                     def noping():
@@ -171,30 +171,32 @@ def main():
 
                     ######## COUNTDOWN (!countdown <int>)
                     def countdown():
-                        countdownmatch = re.compile(r"^!countdown( \d+)?", re.IGNORECASE)
-
+                        countdownmatch = re.compile(r"^(!countdown)( [0-9]{1,2})?$", re.IGNORECASE)
+    
                         if (countdownmatch.match(incomingmsg)):
-                            irc.sendmsg("Countdown starting!")
-                            time.sleep(2)
-                            c = str(re.findall(r"\d+", incomingmsg))
-                            c = c.replace("[", "")
-                            c = c.replace("]", "")
-                            c = c.replace("'", "")
+                            c = re.search(r"\d+", incomingmsg)
+                            counter = 3
 
-                            if c != "":
-                                counter = int(c)
-                            else:
+                            try: 
+                                counter = int(c[0])
+                            except:
                                 counter = 3
 
-                            while counter > 0:
-                                irc.sendmsg(str(counter) + "!")
-                                time.sleep(1.5)
-                                counter = counter - 1
-                            irc.sendmsg("GO!")
+                            # we don't want 0 countdown or countdowns beyond 30
+                            if counter != 0 and counter <= 30:
+                                irc.sendmsg("Countdown starting!")
+                                time.sleep(2)
+
+                                while counter > 0:
+                                    irc.sendmsg(str(counter) + "!")
+                                    time.sleep(1.5)
+                                    counter = counter - 1
+                                irc.sendmsg("GO!")
+                            
 
                     ######## NO BACKSEAT GAMING! (!backseat OR !bsg)
                     def backseatgaming():
-                        backseatmatch = re.compile("^!(backseat|bsg)", re.IGNORECASE)
+                        backseatmatch = re.compile("^!(backseat|bsg)$", re.IGNORECASE)
 
                         if (backseatmatch.match(incomingmsg)):
                             irc.sendmsg("NO BACKSEAT GAMING!")

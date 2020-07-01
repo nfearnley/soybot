@@ -18,8 +18,11 @@ class IRC:
         self.socket.send(("JOIN #" + self.streamername + NEWLINE).encode())
 
     def sendmsg(self, message):
-        self.socket.send(("PRIVMSG #" + self.streamername + " :" + message + NEWLINE).encode())
-        print("***" + self.displayname + ": " + message)
-
+        try:
+            self.socket.send(("PRIVMSG #" + self.streamername + " :" + message + NEWLINE).encode())
+            print("***" + self.displayname + ": " + message)
+        except:
+            print("Couldn't send message.")
+        
     def pong(self):
         self.socket.send("PONG %s\r\n")
