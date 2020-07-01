@@ -24,7 +24,7 @@ from soybot.lib.irc import IRC
 
 # Globals. Change this.
 displayname = "Soybot"
-botname = streamername = confirm = timedmsgconfirm = ""
+botname = streamername = confirm = timedmsgconfirm = nopingconfirm = ""
 
 # eventually these will go to an external file but for now let's get it even working
 timerlist = [
@@ -67,7 +67,7 @@ def main():
     # grab auth key
     f = open("../soybot_oauth", "r")
     oauth = f.read()
-    global displayname, botname, streamername, confirm, timedmsgconfirm, s
+    global displayname, botname, streamername, confirm, timedmsgconfirm, nopingconfirm, s
 
     # connect
     while confirm != "y":
@@ -78,6 +78,9 @@ def main():
         if botname == "":
             botname = "allezsoybot"
         timedmsgconfirm = input("Would you like to use timed messages this session? [Y/N] ").lower()
+        if nopingconfirm == "":
+            nopingconfirm = "n"
+        nopingconfirm = input("Activate NoPing this session? [Y/N] ").lower()
         if timedmsgconfirm == "":
             timedmsgconfirm = "n"
         confirm = input("Connect With these settings now? [Y/N] ").lower()
@@ -201,9 +204,11 @@ def main():
                     # multithreading?? i've gone mad!
                     # why yes i do have these arranged in a certain order so it's aesthetically pleasing ok
                     threading.Thread(name='cute', target=cute, daemon=True).start()
-                    threading.Thread(name='noping', target=noping, daemon=True).start()
                     threading.Thread(name='countdown', target=countdown, daemon=True).start()
                     threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
+
+                    if nopingconfirm == "y":
+                        threading.Thread(name='noping', target=noping, daemon=True).start()
 
 if __name__ == "__main__":
     asyncio.run(main())
