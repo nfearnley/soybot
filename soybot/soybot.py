@@ -18,6 +18,7 @@
 import time
 import re
 import threading
+import asyncio
 
 from datetime import datetime
 from soybot.lib.irc import IRC
