@@ -11,7 +11,7 @@
 # delete my last message because APPARENTLY NORMAL USERS CAN'T DO THAT LIKE ON MIXER AAAAAAAAAAAAAAAAA
 # timed messages need to be independent of listening for messages AND not hold up the entire program aaaaaaAAAAAAAA
 # quote db because i'm tired of scorpbot
-# maybe the bot shouldn't run noping when someone else is running a command (like quotes)
+# maybe the bot shouldn't run NoPing when someone else is running a command (like quotes)
 # actually the incoming message handing in general is... y i k e s
 # "oh boy 3 am" command needs to ask for time zone on boot (default to system time zone)
 
@@ -126,7 +126,8 @@ def main():
             # split msg
             splitmsg = line.split("\r\n")
             splitmsg = splitmsg[-2]
-            splitmsg = splitmsg[1:]
+            if splitmsg[0] == ":":
+                splitmsg = splitmsg[1:]
 
             # we got the username!
             splitmsgu = splitmsg.split("!")

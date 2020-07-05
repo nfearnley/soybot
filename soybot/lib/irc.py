@@ -25,4 +25,5 @@ class IRC:
             print("Couldn't send message.")
         
     def pong(self):
-        self.socket.send("PONG %s\r\n")
+        self.socket.send(("PONG %s\r\n").encode())
+        self.socket.send(("***" + self.displayname + ": PONG ").encode())
