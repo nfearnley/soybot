@@ -150,7 +150,7 @@ def main():
             print(incomingusr + ": " + incomingmsg)
 
             # uhh i guess leaving the ping thing from stolen code could be useful??
-            if (incomingcmd == "PING"):
+            if (splitmsg[0:4]):
                 irc.pong()
             else:
 
