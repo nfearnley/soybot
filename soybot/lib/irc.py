@@ -2,7 +2,6 @@ import socket
 
 NEWLINE = "\r\n"
 
-
 class IRC:
     def __init__(self, oauth, streamername, botname, displayname):
         self.oauth = oauth
@@ -22,7 +21,7 @@ class IRC:
             self.socket.send(("PRIVMSG #" + self.streamername + " :" + message + NEWLINE).encode())
             print("***" + self.displayname + ": " + message)
         except:
-            print("Couldn't send message.")
+            print("***" + self.displayname + ": <Couldn't send message.>")
         
     def pong(self):
         self.socket.send(("PONG %s\r\n").encode())

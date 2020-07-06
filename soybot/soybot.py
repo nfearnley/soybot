@@ -11,14 +11,14 @@
 # delete my last message because APPARENTLY NORMAL USERS CAN'T DO THAT LIKE ON MIXER AAAAAAAAAAAAAAAAA
 # timed messages need to be independent of listening for messages AND not hold up the entire program aaaaaaAAAAAAAA
 # quote db because i'm tired of scorpbot
-# maybe the bot shouldn't run NoPing when someone else is running a command (like quotes)
+# maybe the bot shouldn't run noping when someone else is running a command (like quotes)
 # actually the incoming message handing in general is... y i k e s
 # "oh boy 3 am" command needs to ask for time zone on boot (default to system time zone)
 
 import time
 import re
 import threading
-import asyncio
+import random
 
 from datetime import datetime
 from soybot.lib.irc import IRC
@@ -150,7 +150,7 @@ def main():
             print(incomingusr + ": " + incomingmsg)
 
             # uhh i guess leaving the ping thing from stolen code could be useful??
-            if (splitmsg[0:4]):
+            if (incomingcmd == "PING"):
                 irc.pong()
             else:
 
@@ -165,6 +165,36 @@ def main():
                         if ( cutematch.match(incomingmsg) ):
                             irc.sendmsg("CS is really cute! <3")
 
+
+                    ######## VERY sloppy giveaway tool
+                    def giveaway():
+                        giveawaymatch = re.compile(r"^!giveaway$", re.IGNORECASE)
+                        giveawaycounter = 30
+                        entrylist = []
+
+                        if (giveawaymatch.match(incomingmsg)):
+                            irc.sendmsg("GIVEAWAY STARTING! !enter to enter! You have 30 seconds!")
+
+                            while giveawaycounter > 0:
+                                print("***" + displayname + ": " + str(giveawaycounter))
+
+                                entrymatch = re.compile(r"^!enter$", re.IGNORECASE)
+
+                                if (entrymatch.match(incomingmsg)):
+                                    if (incomingusr not in entrylist):
+                                        entrylist.append(incomingusr)
+
+                                        print(entrylist)
+
+                                giveawaycounter = giveawaycounter - 1
+                                time.sleep(1)
+
+                        if giveawaycounter == 0:
+                            
+                            irc.sendmsg("TIME'S UP! Thanks for playing!")
+                            time.sleep(2)
+                            irc.sendmsg("THE WINNER IS: "+random.choice(entrylist)+"! Congratulations!")
+
                     ######## DON'T F%#*ING PING ME (but bot should ignore itself lmao)
                     def noping():
                         if incomingusr.lower() != botname.lower():
@@ -177,7 +207,6 @@ def main():
     
                         if (countdownmatch.match(incomingmsg)):
                             c = re.search(r"\d+", incomingmsg)
-                            counter = 3
 
                             try: 
                                 counter = int(c[0])
@@ -194,7 +223,6 @@ def main():
                                     time.sleep(1.5)
                                     counter = counter - 1
                                 irc.sendmsg("GO!")
-                            
 
                     ######## NO BACKSEAT GAMING! (!backseat OR !bsg)
                     def backseatgaming():
@@ -208,6 +236,7 @@ def main():
                     # multithreading?? i've gone mad!
                     # why yes i do have these arranged in a certain order so it's aesthetically pleasing ok
                     threading.Thread(name='cute', target=cute, daemon=True).start()
+                    threading.Thread(name='givewaway', target=giveaway, daemon=True).start()
                     threading.Thread(name='countdown', target=countdown, daemon=True).start()
                     threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
 
