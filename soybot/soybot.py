@@ -75,7 +75,7 @@ def main():
     # grab auth key
     f = open("../soybot_oauth", "r")
     oauth = f.read()
-    global displayname, botname, streamername, confirm, timedmsgconfirm, nopingconfirm, s
+    global displayname, botname, streamername, confirm, timedmsgconfirm, nopingconfirm
 
     # connect
     while confirm != "y":
@@ -96,9 +96,6 @@ def main():
     #### login & start
     print(displayname + " is running. To quit, just close this window.\n")
 
-    # empty stuff bc we'll need em
-    incomingmsg = ""
-
     # connect to chat
     irc = IRC(oauth = oauth, streamername = streamername, botname = botname, displayname = displayname)
     irc.connect()
@@ -110,9 +107,6 @@ def main():
     while True:
         # Get the message
         msg = irc.readmsg()
-        # If not message was found, try again
-        if msg is None:
-            continue
 
         ################# TIMED COMMANDS #################
 
@@ -128,13 +122,7 @@ def main():
         ################# END TIMED COMMANDS #################
 
         # sifts through the garbage to get the important bits of the messages
-        incomingmsg = ""
-        if msg.command == "PRIVMSG":
-            # we got the message!
-            incomingmsg = msg.params[1]
-
-        # print incoming msg to console
-        print(msg.nick + ": " + incomingmsg)
+        print(f"> {msg}")
 
         # uhh i guess leaving the ping thing from stolen code could be useful??
         if (msg.command == "PING"):
@@ -146,7 +134,7 @@ def main():
             def cute():
                 cutematch = re.compile(r"^!cute$", re.IGNORECASE)
 
-                if (cutematch.match(incomingmsg)):
+                if (cutematch.match(msg.content)):
                     irc.sendmsg("CS is really cute! <3")
 
             # VERY sloppy giveaway tool
@@ -156,7 +144,7 @@ def main():
                 giveawaycounter = 30
                 entrylist = []
 
-                if (giveawaymatch.match(incomingmsg)):
+                if (giveawaymatch.match(msg.content)):
                     irc.sendmsg("GIVEAWAY STARTING! !enter to enter! You have 30 seconds!")
 
                     while giveawaycounter > 0:
@@ -164,7 +152,7 @@ def main():
 
                         entrymatch = re.compile(r"^!enter$", re.IGNORECASE)
 
-                        if (entrymatch.match(incomingmsg)):
+                        if (entrymatch.match(msg.content)):
                             if (msg.nick not in entrylist):
                                 entrylist.append(msg.nick)
 
@@ -182,15 +170,15 @@ def main():
             # DON'T F%#*ING PING ME (but bot should ignore itself lmao)
             def noping():
                 if msg.nick.lower() != botname.lower():
-                    if (streamername or "@" + streamername) in incomingmsg.lower():
+                    if (streamername or "@" + streamername) in msg.content.lower():
                         irc.sendmsg("Don't ping the streamer, @" + msg.nick + "!")
 
             # COUNTDOWN (!countdown <int>)
             def countdown():
                 countdownmatch = re.compile(r"^(!countdown)( [0-9]{1,2})?$", re.IGNORECASE)
 
-                if (countdownmatch.match(incomingmsg)):
-                    c = re.search(r"\d+", incomingmsg)
+                if (countdownmatch.match(msg.content)):
+                    c = re.search(r"\d+", msg.content)
 
                     try:
                         counter = int(c[0])
@@ -212,7 +200,7 @@ def main():
             def backseatgaming():
                 backseatmatch = re.compile("^!(backseat|bsg)$", re.IGNORECASE)
 
-                if (backseatmatch.match(incomingmsg)):
+                if (backseatmatch.match(msg.content)):
                     irc.sendmsg("NO BACKSEAT GAMING!")
 
             ################# END MANUAL BOT COMMANDS #################
