@@ -19,6 +19,7 @@ import time
 import re
 import threading
 import random
+import asyncio
 
 from datetime import datetime
 from soybot.lib.irc import IRC
@@ -38,30 +39,36 @@ timerlist = [
 timedmsgcount = int(len(timerlist))
 timedmsgcurrent = 0
 
+
 ################# TIMED COMMAND DEFS #################
 def timedmsg(irc, timerlist):
-	if timedmsgconfirm == "y":
-		#15 mins... eventually, for now it's testing with 2 seconds
-		global timedmsgcurrent, timedmsgcount
-		time.sleep(2)
+    if timedmsgconfirm == "y":
+        # 15 mins... eventually, for now it's testing with 2 seconds
+        global timedmsgcurrent, timedmsgcount
+        time.sleep(2)
 
-		irc.sendmsg(timerlist[timedmsgcurrent])
-		timedmsgcurrent = timedmsgcurrent + 1
+        irc.sendmsg(timerlist[timedmsgcurrent])
+        timedmsgcurrent = timedmsgcurrent + 1
 
-		if timedmsgcurrent == timedmsgcount:
-			timedmsgcurrent = 0
-	else:
-		print("Timed messages disabled this session.")
+        if timedmsgcurrent == timedmsgcount:
+            timedmsgcurrent = 0
+    else:
+        print("Timed messages disabled this session.")
 
 
-######## OH BOY 3 AM! (triggers at 3 am)
-def threeam(currenttime): 
+# OH BOY 3 AM! (triggers at 3 am)
+def threeam(currenttime):
     if currenttime == "3:00:00":
         irc.sendmsg("OH BOY 3 AM!")
 
+
+def next_word(s):
+    left, _, right = s.partition(" ")
+    right = right.lstrip()
+    return left, right
+
+
 ################# END TIMED COMMAND DEFS #################
-
-
 def main():
     print("Welcome to Soybot.\n")
 
@@ -89,22 +96,23 @@ def main():
     #### login & start
     print(displayname + " is running. To quit, just close this window.\n")
 
-    #### empty stuff bc we'll need em
-    readbuffer = "".encode()
-    incomingusr = incomingcmd = incomingmsg = ""
+    # empty stuff bc we'll need em
+    incomingmsg = ""
 
-    #### connect to chat
+    # connect to chat
     irc = IRC(oauth = oauth, streamername = streamername, botname = botname, displayname = displayname)
     irc.connect()
 
-    #### online
+    # online
     irc.sendmsg(displayname + " is online.")
     print("Listening.")
 
     while True:
-        # i think this receives the message?? it's a mess so we gotta split it
-        readbuffer = readbuffer + irc.socket.recv(1024)
-        temp = str(readbuffer, 'utf-8').split("r\n")
+        # Get the message
+        msg = irc.readmsg()
+        # If not message was found, try again
+        if msg is None:
+            continue
 
         ################# TIMED COMMANDS #################
 
@@ -119,129 +127,106 @@ def main():
 
         ################# END TIMED COMMANDS #################
 
-        # split msg even more
-        for line in temp:
+        # sifts through the garbage to get the important bits of the messages
+        incomingmsg = ""
+        if msg.command == "PRIVMSG":
+            # we got the message!
+            incomingmsg = msg.params[1]
 
-            #### sifts through the garbage to get the important bits of the messages
+        # print incoming msg to console
+        print(msg.nick + ": " + incomingmsg)
 
-            # split msg
-            splitmsg = line.split("\r\n")
-            splitmsg = splitmsg[-2]
-            if splitmsg[0] == ":":
-                splitmsg = splitmsg[1:]
+        # uhh i guess leaving the ping thing from stolen code could be useful??
+        if (msg.command == "PING"):
+            irc.pong()
+        elif (msg.command == "PRIVMSG"):
+            ################# ACTUAL BOT COMMANDS HERE #################
 
-            # we got the username!
-            splitmsgu = splitmsg.split("!")
-            incomingusr = splitmsgu[0]
+            # ehehehehehe
+            def cute():
+                cutematch = re.compile(r"^!cute$", re.IGNORECASE)
 
-            # we got the command
-            splitmsgc = splitmsg.replace(incomingusr+"!"+incomingusr+"@"+incomingusr+".tmi.twitch.tv ","")
-            splitmsgc = splitmsgc.split(" #"+streamername)
-            incomingcmd = splitmsgc[0]
+                if (cutematch.match(incomingmsg)):
+                    irc.sendmsg("CS is really cute! <3")
 
-            if incomingcmd == "PRIVMSG":
-                # we got the message!
-                splitmsgm = splitmsg.split(incomingusr+"!"+incomingusr+"@"+incomingusr+".tmi.twitch.tv PRIVMSG #"+streamername+" :")
-                incomingmsg = str(splitmsgm[1])
-            else:
-                incomingmsg = ""
+            # VERY sloppy giveaway tool
 
-            # print incoming msg to console
-            print(incomingusr + ": " + incomingmsg)
+            def giveaway():
+                giveawaymatch = re.compile(r"^!giveaway$", re.IGNORECASE)
+                giveawaycounter = 30
+                entrylist = []
 
-            # uhh i guess leaving the ping thing from stolen code could be useful??
-            if (incomingcmd == "PING"):
-                irc.pong()
-            else:
+                if (giveawaymatch.match(incomingmsg)):
+                    irc.sendmsg("GIVEAWAY STARTING! !enter to enter! You have 30 seconds!")
 
-                if (incomingcmd == "PRIVMSG"):
+                    while giveawaycounter > 0:
+                        print("***" + displayname + ": " + str(giveawaycounter))
 
-                    ################# ACTUAL BOT COMMANDS HERE #################
+                        entrymatch = re.compile(r"^!enter$", re.IGNORECASE)
 
-                    ######## ehehehehehe
-                    def cute():
-                        cutematch = re.compile(r"^!cute$", re.IGNORECASE)
+                        if (entrymatch.match(incomingmsg)):
+                            if (msg.nick not in entrylist):
+                                entrylist.append(msg.nick)
 
-                        if ( cutematch.match(incomingmsg) ):
-                            irc.sendmsg("CS is really cute! <3")
+                                print(entrylist)
 
+                        giveawaycounter = giveawaycounter - 1
+                        time.sleep(1)
 
-                    ######## VERY sloppy giveaway tool
-                    def giveaway():
-                        giveawaymatch = re.compile(r"^!giveaway$", re.IGNORECASE)
-                        giveawaycounter = 30
-                        entrylist = []
+                if giveawaycounter == 0:
 
-                        if (giveawaymatch.match(incomingmsg)):
-                            irc.sendmsg("GIVEAWAY STARTING! !enter to enter! You have 30 seconds!")
+                    irc.sendmsg("TIME'S UP! Thanks for playing!")
+                    time.sleep(2)
+                    irc.sendmsg("THE WINNER IS: " + random.choice(entrylist) + "! Congratulations!")
 
-                            while giveawaycounter > 0:
-                                print("***" + displayname + ": " + str(giveawaycounter))
+            # DON'T F%#*ING PING ME (but bot should ignore itself lmao)
+            def noping():
+                if msg.nick.lower() != botname.lower():
+                    if (streamername or "@" + streamername) in incomingmsg.lower():
+                        irc.sendmsg("Don't ping the streamer, @" + msg.nick + "!")
 
-                                entrymatch = re.compile(r"^!enter$", re.IGNORECASE)
+            # COUNTDOWN (!countdown <int>)
+            def countdown():
+                countdownmatch = re.compile(r"^(!countdown)( [0-9]{1,2})?$", re.IGNORECASE)
 
-                                if (entrymatch.match(incomingmsg)):
-                                    if (incomingusr not in entrylist):
-                                        entrylist.append(incomingusr)
+                if (countdownmatch.match(incomingmsg)):
+                    c = re.search(r"\d+", incomingmsg)
 
-                                        print(entrylist)
+                    try:
+                        counter = int(c[0])
+                    except:
+                        counter = 3
 
-                                giveawaycounter = giveawaycounter - 1
-                                time.sleep(1)
+                    # we don't want 0 countdown or countdowns beyond 30
+                    if counter != 0 and counter <= 30:
+                        irc.sendmsg("Countdown starting!")
+                        time.sleep(2)
 
-                        if giveawaycounter == 0:
-                            
-                            irc.sendmsg("TIME'S UP! Thanks for playing!")
-                            time.sleep(2)
-                            irc.sendmsg("THE WINNER IS: "+random.choice(entrylist)+"! Congratulations!")
+                        while counter > 0:
+                            irc.sendmsg(str(counter) + "!")
+                            time.sleep(1.5)
+                            counter = counter - 1
+                        irc.sendmsg("GO!")
 
-                    ######## DON'T F%#*ING PING ME (but bot should ignore itself lmao)
-                    def noping():
-                        if incomingusr.lower() != botname.lower():
-                            if (streamername or "@" + streamername) in incomingmsg.lower():
-                                irc.sendmsg("Don't ping the streamer, @" + incomingusr + "!")
+            # NO BACKSEAT GAMING! (!backseat OR !bsg)
+            def backseatgaming():
+                backseatmatch = re.compile("^!(backseat|bsg)$", re.IGNORECASE)
 
-                    ######## COUNTDOWN (!countdown <int>)
-                    def countdown():
-                        countdownmatch = re.compile(r"^(!countdown)( [0-9]{1,2})?$", re.IGNORECASE)
-    
-                        if (countdownmatch.match(incomingmsg)):
-                            c = re.search(r"\d+", incomingmsg)
+                if (backseatmatch.match(incomingmsg)):
+                    irc.sendmsg("NO BACKSEAT GAMING!")
 
-                            try: 
-                                counter = int(c[0])
-                            except:
-                                counter = 3
+            ################# END MANUAL BOT COMMANDS #################
 
-                            # we don't want 0 countdown or countdowns beyond 30
-                            if counter != 0 and counter <= 30:
-                                irc.sendmsg("Countdown starting!")
-                                time.sleep(2)
+            # multithreading?? i've gone mad!
+            # why yes i do have these arranged in a certain order so it's aesthetically pleasing ok
+            threading.Thread(name='cute', target=cute, daemon=True).start()
+            threading.Thread(name='givewaway', target=giveaway, daemon=True).start()
+            threading.Thread(name='countdown', target=countdown, daemon=True).start()
+            threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
 
-                                while counter > 0:
-                                    irc.sendmsg(str(counter) + "!")
-                                    time.sleep(1.5)
-                                    counter = counter - 1
-                                irc.sendmsg("GO!")
+            if nopingconfirm == "y":
+                threading.Thread(name='noping', target=noping, daemon=True).start()
 
-                    ######## NO BACKSEAT GAMING! (!backseat OR !bsg)
-                    def backseatgaming():
-                        backseatmatch = re.compile("^!(backseat|bsg)$", re.IGNORECASE)
-
-                        if (backseatmatch.match(incomingmsg)):
-                            irc.sendmsg("NO BACKSEAT GAMING!")
-
-                    ################# END MANUAL BOT COMMANDS #################
-
-                    # multithreading?? i've gone mad!
-                    # why yes i do have these arranged in a certain order so it's aesthetically pleasing ok
-                    threading.Thread(name='cute', target=cute, daemon=True).start()
-                    threading.Thread(name='givewaway', target=giveaway, daemon=True).start()
-                    threading.Thread(name='countdown', target=countdown, daemon=True).start()
-                    threading.Thread(name='backseatgaming', target=backseatgaming, daemon=True).start()
-
-                    if nopingconfirm == "y":
-                        threading.Thread(name='noping', target=noping, daemon=True).start()
 
 if __name__ == "__main__":
     asyncio.run(main())
